@@ -3,15 +3,15 @@ import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import './App.css';
 
-// Static price list - you can modify this array directly in the code
+// Liste de prix statique - modifiez ce tableau directement dans le code
 const STATIC_PRICE_LIST = [
   { code: 'PROD001', price: 25.50 },
   { code: 'PROD002', price: 12.75 },
   { code: 'PROD003', price: 8.90 },
   { code: 'PROD004', price: 45.00 },
   { code: 'PROD005', price: 33.25 },
-  // Add more products as needed
-  // Format: { code: 'PRODUCT_CODE', price: 99.99 }
+  // Ajoutez d'autres produits selon vos besoins
+  // Format: { code: 'CODE_PRODUIT', price: 99.99 }
 ];
 
 function App() {
@@ -25,6 +25,7 @@ function App() {
   const [filterType, setFilterType] = useState('all');
   const [viewMode, setViewMode] = useState('list');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [hasQtéPhys, setHasQtéPhys] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     counted: 0,
@@ -32,7 +33,7 @@ function App() {
     totalValue: 0
   });
 
-  // Helper function to get price from static list
+  // Fonction pour obtenir le prix depuis la liste statique
   const getProductPrice = (code) => {
     const priceItem = STATIC_PRICE_LIST.find(item => item.code === code);
     return priceItem ? priceItem.price : 0;
@@ -60,16 +61,15 @@ function App() {
       const missingColumns = requiredColumns.filter(col => !headers.includes(col));
       
       if (missingColumns.length > 0) {
-        alert(`Missing columns: ${missingColumns.join(', ')}`);
+        alert(`Colonnes manquantes: ${missingColumns.join(', ')}`);
         return;
       }
 
-      // Check if QtéPhys column exists, if not add it
-      if (!headers.includes('QtéPhys')) {
-        headers.push('QtéPhys');
-      }
+      // Check if QtéPhys column already exists
+      const hasPhysColumn = headers.includes('QtéPhys');
+      setHasQtéPhys(hasPhysColumn);
 
-      // Convert to objects
+      // Convert to objects without modifying headers
       const rows = jsonData.slice(1).map(row => {
         const obj = {};
         headers.forEach((header, index) => {
@@ -121,7 +121,7 @@ function App() {
 
   const handleSaveCount = () => {
     if (!physicalQuantity && physicalQuantity !== '0') {
-      alert('Please enter a quantity');
+      alert('Veuillez saisir une quantité');
       return;
     }
 
@@ -137,7 +137,7 @@ function App() {
       const systemQty = parseFloat(currentItem['QtéSys']) || 0;
       const price = getProductPrice(currentItem['Code']);
       
-      // Update QtéPhys
+      // Update QtéPhys (whether it existed or not)
       currentItem['QtéPhys'] = physicalQuantity;
       
       // Calculate and update Écart (QtéPhys - QtéSys)
@@ -211,11 +211,11 @@ function App() {
     // Create worksheet
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Stock Count');
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventaire');
     
     // Generate filename with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const exportFileName = `stock_count_completed_${timestamp}.xlsx`;
+    const exportFileName = `inventaire_complete_${timestamp}.xlsx`;
     
     // Save file
     XLSX.writeFile(wb, exportFileName);
@@ -226,15 +226,15 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        <h1>📦 Comptage - Stock Counting App</h1>
+        <h1>📦 Comptage - Application d'Inventaire</h1>
       </header>
 
       <main className="app-main">
         {!stockData.length ? (
           <div className="upload-section">
-            <h2>Upload Excel File</h2>
-            <p>File should contain columns: Article, Code, QtéSys, Écart, ValÉcart</p>
-            <p className="note">The app will add QtéPhys column if not present</p>
+            <h2>Charger un fichier Excel</h2>
+            <p>Le fichier doit contenir les colonnes: Article, Code, QtéSys, Écart, ValÉcart</p>
+            <p className="note">La colonne QtéPhys sera utilisée si elle existe déjà</p>
             <input 
               type="file" 
               accept=".xlsx, .xls, .csv" 
@@ -246,16 +246,16 @@ function App() {
           <div className="dashboard">
             <div className="dashboard-header">
               <div className="file-info">
-                <span>File: {fileName}</span>
+                <span>Fichier: {fileName}</span>
                 <span>Total: {stats.total}</span>
-                <span>Counted: {stats.counted}</span>
-                <span>Remaining: {stats.remaining}</span>
-                <span>Total Value: {stats.totalValue.toFixed(2)}</span>
+                <span>Comptés: {stats.counted}</span>
+                <span>Restants: {stats.remaining}</span>
+                <span>Valeur Totale: {stats.totalValue.toFixed(2)}</span>
               </div>
 
               <div className="dashboard-actions">
                 <button onClick={exportToExcel} className="btn btn-success">
-                  Export to Excel
+                  Exporter vers Excel
                 </button>
               </div>
             </div>
@@ -266,7 +266,7 @@ function App() {
                   <div className="search-box">
                     <input
                       type="text"
-                      placeholder="Search by Article or Code..."
+                      placeholder="Rechercher par Article ou Code..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="search-input"
@@ -277,19 +277,19 @@ function App() {
                       className={`btn btn-filter ${filterType === 'all' ? 'active' : ''}`}
                       onClick={() => setFilterType('all')}
                     >
-                      All
+                      Tous
                     </button>
                     <button 
                       className={`btn btn-filter ${filterType === 'uncounted' ? 'active' : ''}`}
                       onClick={() => setFilterType('uncounted')}
                     >
-                      Uncounted
+                      Non comptés
                     </button>
                     <button 
                       className={`btn btn-filter ${filterType === 'counted' ? 'active' : ''}`}
                       onClick={() => setFilterType('counted')}
                     >
-                      Counted
+                      Comptés
                     </button>
                   </div>
                 </div>
@@ -308,13 +308,13 @@ function App() {
                       <div className="product-body">
                         <div className="product-article">{item['Article']}</div>
                         <div className="product-details">
-                          <span>Sys: {item['QtéSys']}</span>
+                          <span>Système: {item['QtéSys']}</span>
                           {item.counted && (
-                            <span>Phys: {item['QtéPhys']}</span>
+                            <span>Physique: {item['QtéPhys']}</span>
                           )}
                         </div>
                         <div className="product-price">
-                          Price: {getProductPrice(item['Code']).toFixed(2)}
+                          Prix: {getProductPrice(item['Code']).toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -323,7 +323,7 @@ function App() {
 
                 {filteredData.length === 0 && (
                   <div className="no-results">
-                    No products found
+                    Aucun produit trouvé
                   </div>
                 )}
               </div>
@@ -331,9 +331,9 @@ function App() {
               <div className="count-view">
                 <div className="count-header">
                   <button onClick={handleCancelCount} className="btn btn-secondary">
-                    ← Back
+                    ← Retour
                   </button>
-                  <h2>Count Product</h2>
+                  <h2>Compter le produit</h2>
                 </div>
 
                 {selectedProduct && (
@@ -348,50 +348,50 @@ function App() {
                         <span className="value">{selectedProduct['Code']}</span>
                       </div>
                       <div className="detail-item">
-                        <label>System Quantity:</label>
+                        <label>Quantité Système:</label>
                         <span className="value system-qty">{selectedProduct['QtéSys']}</span>
                       </div>
                       <div className="detail-item">
-                        <label>Current Écart:</label>
+                        <label>Écart actuel:</label>
                         <span className="value">{selectedProduct['Écart']}</span>
                       </div>
                       <div className="detail-item">
-                        <label>Current ValÉcart:</label>
+                        <label>ValÉcart actuel:</label>
                         <span className="value">{selectedProduct['ValÉcart']}</span>
                       </div>
                       <div className="detail-item">
-                        <label>Unit Price:</label>
+                        <label>Prix unitaire:</label>
                         <span className="value price">
                           {getProductPrice(selectedProduct['Code']).toFixed(2)}
                         </span>
                       </div>
                       {physicalQuantity && (
                         <div className="detail-item preview">
-                          <label>Preview:</label>
+                          <label>Aperçu:</label>
                           <span className="value">
-                            New Écart: {parseFloat(physicalQuantity || 0) - parseFloat(selectedProduct['QtéSys'] || 0)}
+                            Nouvel Écart: {parseFloat(physicalQuantity || 0) - parseFloat(selectedProduct['QtéSys'] || 0)}
                             <br />
-                            New ValÉcart: {(parseFloat(physicalQuantity || 0) - parseFloat(selectedProduct['QtéSys'] || 0)) * getProductPrice(selectedProduct['Code'])}
+                            Nouveau ValÉcart: {(parseFloat(physicalQuantity || 0) - parseFloat(selectedProduct['QtéSys'] || 0)) * getProductPrice(selectedProduct['Code'])}
                           </span>
                         </div>
                       )}
                     </div>
 
                     <div className="input-section">
-                      <label htmlFor="physicalQty">QtéPhys (Physical Quantity):</label>
+                      <label htmlFor="physicalQty">QtéPhys (Quantité Physique):</label>
                       <input
                         id="physicalQty"
                         type="number"
                         value={physicalQuantity}
                         onChange={(e) => setPhysicalQuantity(e.target.value)}
-                        placeholder="Enter physical count"
+                        placeholder="Saisir la quantité physique"
                         autoFocus
                       />
                     </div>
 
                     <div className="button-group">
                       <button onClick={handleSaveCount} className="btn btn-primary btn-large">
-                        Save Count
+                        Enregistrer
                       </button>
                     </div>
                   </div>
