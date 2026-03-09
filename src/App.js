@@ -25,13 +25,24 @@ function App() {
   const [filterType, setFilterType] = useState('all');
   const [viewMode, setViewMode] = useState('list');
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [hasQtéPhys, setHasQtéPhys] = useState(false);
+  const [headers, setHeaders] = useState([]);
+  const [columnMapping, setColumnMapping] = useState({});
   const [stats, setStats] = useState({
     total: 0,
     counted: 0,
     remaining: 0,
     totalValue: 0
   });
+
+  // Fonction pour normaliser les noms de colonnes (enlever accents, espaces, etc.)
+  const normalizeColumnName = (name) => {
+    if (!name) return '';
+    return name.toString()
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Enlever les accents
+      .replace(/\s+/g, '') // Enlever les espaces
+      .replace(/[^a-z0-9]/g, ''); // Enlever les caractères spéciaux
+  };
 
   // Fonction pour obtenir le prix depuis la liste statique
   const getProductPrice = (code) => {
@@ -53,41 +64,77 @@ function App() {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-      // Get headers and data
-      const headers = jsonData[0];
+      // Get headers and create mapping
+      const fileHeaders = jsonData[0];
+      console.log('Headers from file:', fileHeaders); // Pour déboguer
       
-      // Check if required columns exist
-      const requiredColumns = ['Article', 'Code', 'QtéSys', 'Écart', 'ValÉcart'];
-      const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+      // Create mapping for normalized column names
+      const mapping = {};
+      fileHeaders.forEach(header => {
+        const normalized = normalizeColumnName(header);
+        mapping[normalized] = header;
+      });
+      
+      setColumnMapping(mapping);
+      console.log('Column mapping:', mapping); // Pour déboguer
+
+      // Check if required columns exist (using normalized names)
+      const requiredColumns = ['article', 'code', 'qtesys', 'ecart', 'valecart'];
+      const missingColumns = [];
+      
+      requiredColumns.forEach(col => {
+        if (!mapping[col]) {
+          missingColumns.push(col);
+        }
+      });
       
       if (missingColumns.length > 0) {
-        alert(`Colonnes manquantes: ${missingColumns.join(', ')}`);
+        alert(`Colonnes manquantes: ${missingColumns.join(', ')}. Colonnes trouvées: ${fileHeaders.join(', ')}`);
         return;
       }
 
-      // Check if QtéPhys column already exists
-      const hasPhysColumn = headers.includes('QtéPhys');
-      setHasQtéPhys(hasPhysColumn);
+      // Check if QtéPhys column exists (trying different variations)
+      const possiblePhysColumns = ['qtephys', 'qtéphys', 'quantitephysique', 'quantitephys', 'phys'];
+      let physColumnFound = false;
+      let physColumnName = '';
+      
+      for (const possible of possiblePhysColumns) {
+        if (mapping[possible]) {
+          physColumnFound = true;
+          physColumnName = mapping[possible];
+          break;
+        }
+      }
+      
+      if (!physColumnFound) {
+        alert('La colonne QtéPhys (ou variante) est requise dans le fichier Excel. ' +
+              'Colonnes trouvées: ' + fileHeaders.join(', '));
+        return;
+      }
 
-      // Convert to objects without modifying headers
+      console.log('Physical column found:', physColumnName);
+
+      // Convert to objects using original headers
       const rows = jsonData.slice(1).map(row => {
         const obj = {};
-        headers.forEach((header, index) => {
+        fileHeaders.forEach((header, index) => {
           obj[header] = row[index] || '';
         });
-        obj['counted'] = false;
+        // Mark as counted if QtéPhys has a value
+        obj['counted'] = obj[physColumnName] ? obj[physColumnName].toString().trim() !== '' : false;
         return obj;
       });
 
+      setHeaders(fileHeaders);
       setStockData(rows);
       setFilteredData(rows);
-      updateStats(rows);
+      updateStats(rows, physColumnName);
     };
 
     reader.readAsArrayBuffer(file);
   };
 
-  const updateStats = (data) => {
+  const updateStats = (data, physColumnName) => {
     const counted = data.filter(item => item.counted).length;
     const totalValue = data.reduce((sum, item) => {
       const price = getProductPrice(item['Code']);
@@ -106,7 +153,14 @@ function App() {
   const startCounting = (index = 0) => {
     setCurrentIndex(index);
     setSelectedProduct(filteredData[index]);
-    setPhysicalQuantity(filteredData[index]['QtéPhys'] || '');
+    
+    // Find the physical quantity column
+    const physColumn = Object.keys(columnMapping).find(key => 
+      key.includes('qtephys') || key.includes('quantitephys')
+    );
+    const physColumnName = physColumn ? columnMapping[physColumn] : 'QtéPhys';
+    
+    setPhysicalQuantity(filteredData[index][physColumnName] || '');
     setIsCounting(true);
     setViewMode('count');
   };
@@ -114,7 +168,14 @@ function App() {
   const handleProductSelect = (product, index) => {
     setSelectedProduct(product);
     setCurrentIndex(index);
-    setPhysicalQuantity(product['QtéPhys'] || '');
+    
+    // Find the physical quantity column
+    const physColumn = Object.keys(columnMapping).find(key => 
+      key.includes('qtephys') || key.includes('quantitephys')
+    );
+    const physColumnName = physColumn ? columnMapping[physColumn] : 'QtéPhys';
+    
+    setPhysicalQuantity(product[physColumnName] || '');
     setIsCounting(true);
     setViewMode('count');
   };
@@ -137,8 +198,14 @@ function App() {
       const systemQty = parseFloat(currentItem['QtéSys']) || 0;
       const price = getProductPrice(currentItem['Code']);
       
-      // Update QtéPhys (whether it existed or not)
-      currentItem['QtéPhys'] = physicalQuantity;
+      // Find the physical quantity column name
+      const physColumn = Object.keys(columnMapping).find(key => 
+        key.includes('qtephys') || key.includes('quantitephys')
+      );
+      const physColumnName = physColumn ? columnMapping[physColumn] : 'QtéPhys';
+      
+      // Update QtéPhys column
+      currentItem[physColumnName] = physicalQuantity;
       
       // Calculate and update Écart (QtéPhys - QtéSys)
       const ecart = physicalQty - systemQty;
@@ -150,7 +217,7 @@ function App() {
       currentItem['counted'] = true;
 
       setStockData(updatedData);
-      updateStats(updatedData);
+      updateStats(updatedData, physColumnName);
       
       // Update filtered data
       const newFilteredData = applyFilters(updatedData);
@@ -202,10 +269,14 @@ function App() {
   }, [searchTerm, filterType, stockData]);
 
   const exportToExcel = () => {
-    // Prepare data for export - only keep original columns
+    // Prepare data for export - ONLY keep original columns (no internal fields)
     const exportData = stockData.map(item => {
-      const { counted, ...rest } = item; // Remove internal tracking field
-      return rest;
+      const exportItem = {};
+      // Only include headers that were in the original file
+      headers.forEach(header => {
+        exportItem[header] = item[header];
+      });
+      return exportItem;
     });
 
     // Create worksheet
@@ -222,6 +293,14 @@ function App() {
   };
 
   const currentItem = selectedProduct || {};
+  
+  // Find the physical quantity column name for display
+  const physColumnDisplay = (() => {
+    const physColumn = Object.keys(columnMapping).find(key => 
+      key.includes('qtephys') || key.includes('quantitephys')
+    );
+    return physColumn ? columnMapping[physColumn] : 'QtéPhys';
+  })();
 
   return (
     <div className="App">
@@ -233,8 +312,8 @@ function App() {
         {!stockData.length ? (
           <div className="upload-section">
             <h2>Charger un fichier Excel</h2>
-            <p>Le fichier doit contenir les colonnes: Article, Code, QtéSys, Écart, ValÉcart</p>
-            <p className="note">La colonne QtéPhys sera utilisée si elle existe déjà</p>
+            <p>Le fichier doit contenir les colonnes: Article, Code, QtéSys, Écart, ValÉcart, QtéPhys</p>
+            <p className="note">La colonne QtéPhys doit être présente (peut être écrite QtéPhys, QtéPhys, QuantitéPhys, etc.)</p>
             <input 
               type="file" 
               accept=".xlsx, .xls, .csv" 
@@ -310,7 +389,7 @@ function App() {
                         <div className="product-details">
                           <span>Système: {item['QtéSys']}</span>
                           {item.counted && (
-                            <span>Physique: {item['QtéPhys']}</span>
+                            <span>Physique: {item[physColumnDisplay]}</span>
                           )}
                         </div>
                         <div className="product-price">
@@ -378,13 +457,13 @@ function App() {
                     </div>
 
                     <div className="input-section">
-                      <label htmlFor="physicalQty">QtéPhys (Quantité Physique):</label>
+                      <label htmlFor="physicalQty">{physColumnDisplay}:</label>
                       <input
                         id="physicalQty"
                         type="number"
                         value={physicalQuantity}
                         onChange={(e) => setPhysicalQuantity(e.target.value)}
-                        placeholder="Saisir la quantité physique"
+                        placeholder={`Saisir ${physColumnDisplay}`}
                         autoFocus
                       />
                     </div>
