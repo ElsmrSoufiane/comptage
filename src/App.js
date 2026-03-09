@@ -30,7 +30,7 @@ function App() {
       setOriginalHeaders(headers);
       
       // Check if required columns exist
-      const requiredColumns = ['Article', 'Code', 'QtéSys', 'Écart', 'valÉcart'];
+      const requiredColumns = ['Article', 'Code', 'QtéSys', 'Écart', 'ValÉcart'];
       const missingColumns = requiredColumns.filter(col => !headers.includes(col));
       
       if (missingColumns.length > 0) {
