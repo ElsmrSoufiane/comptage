@@ -1,4 +1,4 @@
-/* App.css */
+/* App.css - Updated styles */
 * {
   margin: 0;
   padding: 0;
@@ -31,7 +31,7 @@ body {
 .app-main {
   flex: 1;
   padding: 2rem;
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
@@ -40,18 +40,25 @@ body {
   background: white;
   border-radius: 8px;
   padding: 2rem;
-  text-align: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.upload-section h2 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
+.upload-group {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
-.upload-section p {
+.upload-group h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.upload-group p {
   color: #7f8c8d;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
 }
 
 .file-input {
@@ -63,105 +70,193 @@ body {
   max-width: 400px;
 }
 
-.counting-section {
+.price-list-info {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.dashboard {
   background: white;
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
 .file-info {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
-  padding: 0.5rem;
+  align-items: center;
+  padding: 1rem;
   background: #ecf0f1;
   border-radius: 4px;
   color: #2c3e50;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.start-section {
-  text-align: center;
+.dashboard-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
 }
 
-.start-section h2 {
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
+.list-controls {
+  margin-bottom: 2rem;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
+.search-box {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #bdc3c7;
   border-radius: 4px;
   font-size: 1rem;
-  cursor: pointer;
-  margin: 0 0.5rem;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease;
 }
 
-.btn-primary {
+.search-input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-filter {
+  background-color: #ecf0f1;
+  color: #2c3e50;
+  padding: 0.5rem 1rem;
+}
+
+.btn-filter.active {
   background-color: #3498db;
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-info {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-info:hover {
   background-color: #2980b9;
 }
 
-.btn-success {
-  background-color: #27ae60;
-  color: white;
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 0.5rem;
 }
 
-.btn-success:hover {
-  background-color: #229954;
+.product-card {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.btn-secondary {
-  background-color: #95a5a6;
-  color: white;
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #3498db;
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background-color: #7f8c8d;
+.product-card.counted {
+  background: #e8f5e9;
+  border-color: #27ae60;
 }
 
-.btn-warning {
-  background-color: #f39c12;
-  color: white;
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
-.btn-warning:hover {
-  background-color: #e67e22;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.counting-interface {
-  margin-top: 1.5rem;
-}
-
-.progress {
-  margin-bottom: 2rem;
+.product-code {
+  font-weight: bold;
   color: #2c3e50;
+}
+
+.badge {
+  background: #27ae60;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.product-article {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.product-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #34495e;
+  margin-bottom: 0.5rem;
+}
+
+.product-price {
+  font-size: 0.9rem;
+  color: #e67e22;
   font-weight: bold;
 }
 
-.progress-bar {
-  margin-top: 0.5rem;
-  height: 10px;
-  background-color: #ecf0f1;
-  border-radius: 5px;
-  overflow: hidden;
+.no-results {
+  text-align: center;
+  padding: 3rem;
+  color: #95a5a6;
+  font-size: 1.1rem;
 }
 
-.progress-fill {
-  height: 100%;
-  background-color: #27ae60;
-  transition: width 0.3s ease;
+.count-view {
+  padding: 1rem;
+}
+
+.count-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+.count-header h2 {
+  color: #2c3e50;
+  margin: 0;
+}
+
+.counting-interface {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .article-details {
@@ -198,6 +293,11 @@ body {
   font-weight: bold;
 }
 
+.detail-item .price {
+  color: #27ae60;
+  font-weight: bold;
+}
+
 .input-section {
   margin-bottom: 1.5rem;
 }
@@ -226,21 +326,75 @@ body {
 .button-group {
   display: flex;
   justify-content: center;
-  gap: 1rem;
   margin-top: 2rem;
 }
 
-@media (max-width: 600px) {
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+.btn-success {
+  background-color: #27ae60;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #229954;
+}
+
+.btn-secondary {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #7f8c8d;
+}
+
+.btn-warning {
+  background-color: #f39c12;
+  color: white;
+}
+
+.btn-warning:hover {
+  background-color: #e67e22;
+}
+
+@media (max-width: 768px) {
   .app-main {
     padding: 1rem;
   }
   
-  .button-group {
+  .file-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .dashboard-actions {
     flex-direction: column;
   }
   
-  .btn {
-    margin: 0.25rem 0;
+  .products-grid {
+    grid-template-columns: 1fr;
   }
   
   .detail-item {
@@ -250,5 +404,11 @@ body {
   .detail-item label {
     width: 100%;
     margin-bottom: 0.25rem;
+  }
+  
+  .count-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
 }
